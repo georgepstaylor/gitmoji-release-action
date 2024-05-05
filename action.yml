@@ -1,0 +1,120 @@
+---
+name: Gitmoji Release Action
+description: Creates a release with gitmoji labels
+
+inputs:
+    GITHUB_TOKEN:
+        description: 'GitHub token'
+        required: true
+    release_type:
+        description: 'Type of release'
+        required: true
+    tag_name:
+        description: 'Tag name'
+        required: false
+    auto_create_tag:
+        description: 'Auto create tag'
+        required: false
+        default: 'false'
+    title_suffix:
+        description: 'Title suffix'
+        required: false
+        default: 'Release'
+    use_v:
+        description: 'Use v prefix for tag name'
+        required: false
+        default: 'true'
+    draft:
+        description: 'Draft release'
+        required: false
+        default: 'false'
+    prerelease:
+        description: 'Pre-release'
+        required: false
+        default: 'false'
+    latest:
+        description: 'Make the release the latest'
+        required: false
+        default: 'true'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Get the latest release
+      id: get-release
+      shell: bash
+      run: |
+         echo "tag=$(gh release list --order desc --limit 1 --jq '.[0].tag_name')" >> $GITHUB_OUTPUT
+    - name: Bump release
+      shell: bash
+      if: ${{ inputs.auto_create_tag == 'true' }}
+      run: | 
+        current_tag=echo "${{ steps.get-release.outputs.tag }}" | cut -d 'v' -f2
+        if [[ ${{ inputs.release_type }} == "patch" ]]; then
+          new_tag=$(echo $current_tag | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+        elif [[ ${{ inputs.release_type }} == "minor" ]]; then
+          new_tag=$(echo $current_tag | awk -F. '{$(NF-1) = $(NF-1) + 1; $NF = 0;} 1' | sed 's/ /./g')
+        elif [[ ${{ inputs.release_type }} == "major" ]]; then
+          new_tag=$(echo $current_tag | awk -F. '{$1 = $1 + 1; $(NF-1) = 0; $NF = 0;} 1' | sed 's/ /./g')
+        fi
+        if [[ ${{ inputs.use_v }} == "true" ]]; then
+          echo "new_tag=v${new_tag}" >> $GITHUB_OUTPUT
+        else
+          echo "new_tag=${new_tag}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create release [auto]
+      id: create-release
+      shell: bash
+      if: ${{ inputs.auto_create_tag == 'true' }}
+      run: |
+            # if latest input is true set the latest flag
+            if [[ ${{ inputs.latest }} == "true" ]]; then
+                latest="--latest"
+            else
+                latest=""
+            fi
+          # if prerelease input is true set the prerelease flag
+            if [[ ${{ inputs.prerelease }} == "true" ]]; then
+                prerelease="--prerelease"
+            else
+                prerelease=""
+            fi
+          # if draft input is true set the draft flag
+            if [[ ${{ inputs.draft }} == "true" ]]; then
+                draft="--draft"
+            else
+                draft=""
+            fi
+          gh release create ${{ steps.create-release.outputs.new_tag }} -t "${{ steps.create-release.outputs.new_tag }}${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
+
+    - name: Create release [manual]
+      id: create-release
+      shell: bash
+      if: ${{ inputs.auto_create_tag != 'true' }}
+      run: |
+          # if latest input is true set the latest flag
+            if [[ ${{ inputs.latest }} == "true" ]]; then
+                latest="--latest"
+            else
+                latest=""
+            fi
+          # if prerelease input is true set the prerelease flag
+            if [[ ${{ inputs.prerelease }} == "true" ]]; then
+                prerelease="--prerelease"
+            else
+                prerelease=""
+            fi
+          # if draft input is true set the draft flag
+            if [[ ${{ inputs.draft }} == "true" ]]; then
+                draft="--draft"
+            else
+                draft=""
+            fi
+          gh release create ${{ inputs.tag_name }} -t "${{ steps.create-release.outputs.new_tag }}${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
+branding:
+    icon: 'check-circle'
+    color: 'green'

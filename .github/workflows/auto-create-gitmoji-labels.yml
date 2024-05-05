@@ -1,0 +1,17 @@
+name: Create gitmoji label
+on:
+  workflow_dispatch:
+    inputs:
+      release-type:
+        description: 'Type of release'
+        required: true
+jobs:
+  create-gitmoji-label:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Create release
+        uses: georgepstaylor/gitmoji-release-action@main
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
