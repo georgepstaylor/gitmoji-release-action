@@ -8,7 +8,7 @@ as `<gitmoji>_gitmoji` for example `✨_gitmoji` or `🐛_gitmoji` etc.
 ## Usage
 ```yaml
 - name: Create Release
-  uses: georgepstaylor/gitmoji-auto-label@v0.0.1
+  uses: georgepstaylor/gitmoji-release-action@v0.0.1
   with:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     release_type: 'patch'
