@@ -46,13 +46,21 @@ runs:
     - name: Get the latest release
       id: get-release
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: |
-         echo "tag=$(gh release list --order desc --limit 1 --jq '.[0].tag_name')" >> $GITHUB_OUTPUT
+        # get the latest non draft release
+        echo "tag=$(gh release list --order desc --limit 1 --json tagName,isLatest,isDraft | jq -rj '.[] | select(.isDraft == false) | select(.isLatest == true) | .tagName')" >> $GITHUB_OUTPUT
+
     - name: Bump release
+      id: bump-release
       shell: bash
       if: ${{ inputs.auto_create_tag == 'true' }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: | 
-          current_tag=echo "${{ steps.get-release.outputs.tag }}" | cut -d 'v' -f2
+          current_tag=$(echo "${{ steps.get-release.outputs.tag }}" | cut -d 'v' -f2)
+          echo $current_tag
           if [[ ${{ inputs.release_type }} == "patch" ]]; then
             new_tag=$(echo $current_tag | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
           elif [[ ${{ inputs.release_type }} == "minor" ]]; then
@@ -60,15 +68,19 @@ runs:
           elif [[ ${{ inputs.release_type }} == "major" ]]; then
             new_tag=$(echo $current_tag | awk -F. '{$1 = $1 + 1; $(NF-1) = 0; $NF = 0;} 1' | sed 's/ /./g')
           fi
-          if [[ ${{ inputs.use_v }} == "true" ]]; then
-            echo "new_tag=v${new_tag}" >> $GITHUB_OUTPUT
+          echo $new_tag
+          if [[ "${{ inputs.use_v }}" == "true" ]]; then
+            echo "final_tag=v${new_tag}" >> $GITHUB_OUTPUT
           else
-            echo "new_tag=${new_tag}" >> $GITHUB_OUTPUT
+            echo "final_tag=${new_tag}" >> $GITHUB_OUTPUT
           fi
+          echo $final_tag
 
     - name: Create release [auto]
       shell: bash
       if: ${{ inputs.auto_create_tag == 'true' }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: |
           # if latest input is true set the latest flag
           if [[ ${{ inputs.latest }} == "true" ]]; then
@@ -88,11 +100,13 @@ runs:
           else
             draft=""
           fi
-          gh release create ${{ steps.create-release.outputs.new_tag }} -t "${{ steps.create-release.outputs.new_tag }}${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
+          gh release create ${{ steps.bump-release.outputs.final_tag }} -t "${{ steps.bump-release.outputs.final_tag }} ${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
 
     - name: Create release [manual]
       shell: bash
       if: ${{ inputs.auto_create_tag != 'true' }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: |
           # if latest input is true set the latest flag
           if [[ ${{ inputs.latest }} == "true" ]]; then
@@ -112,7 +126,8 @@ runs:
           else
             draft=""
           fi
-          gh release create ${{ inputs.tag_name }} -t "${{ steps.create-release.outputs.new_tag }}${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
+          gh release create ${{ inputs.tag_name }} -t "${{ inputs.tag_name }} ${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
+          
 branding:
     icon: 'check-circle'
     color: 'green'
