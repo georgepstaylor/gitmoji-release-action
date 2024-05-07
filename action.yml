@@ -70,11 +70,11 @@ runs:
           fi
           echo $new_tag
           if [[ "${{ inputs.use_v }}" == "true" ]]; then
-            echo "new_tag=v${new_tag}" >> $GITHUB_OUTPUT
+            echo "final_tag=v${new_tag}" >> $GITHUB_OUTPUT
           else
-            echo "new_tag=${new_tag}" >> $GITHUB_OUTPUT
+            echo "final_tag=${new_tag}" >> $GITHUB_OUTPUT
           fi
-          echo $new_tag
+          echo $final_tag
 
     - name: Create release [auto]
       shell: bash
@@ -100,7 +100,7 @@ runs:
           else
             draft=""
           fi
-          gh release create ${{ steps.bump-release.outputs.new_tag }} -t "${{ steps.bump-release.outputs.new_tag }}${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
+          gh release create ${{ steps.bump-release.outputs.final_tag }} -t "${{ steps.bump-release.outputs.final_tag }}${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
 
     - name: Create release [manual]
       shell: bash
@@ -126,7 +126,7 @@ runs:
           else
             draft=""
           fi
-          gh release create ${{ inputs.tag_name }} -t "${{ steps.bump-release.outputs.new_tag }}${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
+          gh release create ${{ inputs.tag_name }} -t "${{ inputs.tag_name }}${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
           
 branding:
     icon: 'check-circle'
