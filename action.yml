@@ -46,8 +46,11 @@ runs:
     - name: Get the latest release
       id: get-release
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: |
          echo "tag=$(gh release list --order desc --limit 1 --jq '.[0].tag_name')" >> $GITHUB_OUTPUT
+
     - name: Bump release
       shell: bash
       if: ${{ inputs.auto_create_tag == 'true' }}
