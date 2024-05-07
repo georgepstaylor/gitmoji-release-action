@@ -100,7 +100,7 @@ runs:
           else
             draft=""
           fi
-          gh release create ${{ steps.bump-release.outputs.final_tag }} -t "${{ steps.bump-release.outputs.final_tag }}${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
+          gh release create ${{ steps.bump-release.outputs.final_tag }} -t "${{ steps.bump-release.outputs.final_tag }} ${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
 
     - name: Create release [manual]
       shell: bash
@@ -126,7 +126,7 @@ runs:
           else
             draft=""
           fi
-          gh release create ${{ inputs.tag_name }} -t "${{ inputs.tag_name }}${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
+          gh release create ${{ inputs.tag_name }} -t "${{ inputs.tag_name }} ${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
           
 branding:
     icon: 'check-circle'
