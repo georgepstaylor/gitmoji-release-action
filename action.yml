@@ -50,7 +50,7 @@ runs:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: |
         # get the latest non draft release
-        echo "tag=$(gh release list --order desc --limit 1 --json tagName,isLatest,isDraft --jq '.[] | select(.isDraft == false) | select(.isLatest == true) | .tagName'" >> $GITHUB_OUTPUT
+        echo "tag=$(gh release list --order desc --limit 1 --json tagName,isLatest,isDraft | jq -rj '.[] | select(.isDraft == false) | select(.isLatest == true) | .tagName')" >> $GITHUB_OUTPUT
 
     - name: Bump release
       shell: bash
