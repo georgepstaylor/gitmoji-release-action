@@ -67,7 +67,6 @@ runs:
           fi
 
     - name: Create release [auto]
-      id: create-release
       shell: bash
       if: ${{ inputs.auto_create_tag == 'true' }}
       run: |
@@ -92,7 +91,6 @@ runs:
           gh release create ${{ steps.create-release.outputs.new_tag }} -t "${{ steps.create-release.outputs.new_tag }}${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
 
     - name: Create release [manual]
-      id: create-release
       shell: bash
       if: ${{ inputs.auto_create_tag != 'true' }}
       run: |
