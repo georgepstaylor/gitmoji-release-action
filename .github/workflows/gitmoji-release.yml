@@ -18,7 +18,7 @@ jobs:
         permissions:
             contents: write
         steps:
-        - uses: georgepstaylor/gitmoji-release-action@v0.0.2
+        - uses: georgepstaylor/gitmoji-release-action@main
           with:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             release_type: ${{ inputs.release_type }}
