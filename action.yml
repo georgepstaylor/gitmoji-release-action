@@ -53,6 +53,7 @@ runs:
         echo "tag=$(gh release list --order desc --limit 1 --json tagName,isLatest,isDraft | jq -rj '.[] | select(.isDraft == false) | select(.isLatest == true) | .tagName')" >> $GITHUB_OUTPUT
 
     - name: Bump release
+      id: bump-release
       shell: bash
       if: ${{ inputs.auto_create_tag == 'true' }}
       env:
@@ -68,7 +69,7 @@ runs:
             new_tag=$(echo $current_tag | awk -F. '{$1 = $1 + 1; $(NF-1) = 0; $NF = 0;} 1' | sed 's/ /./g')
           fi
           echo $new_tag
-          if [[ ${{ inputs.use_v }} == "true" ]]; then
+          if [[ "${{ inputs.use_v }}"" == "true" ]]; then
             echo "new_tag=v${new_tag}" >> $GITHUB_OUTPUT
           else
             echo "new_tag=${new_tag}" >> $GITHUB_OUTPUT
@@ -99,7 +100,7 @@ runs:
           else
             draft=""
           fi
-          gh release create ${{ steps.create-release.outputs.new_tag }} -t "${{ steps.create-release.outputs.new_tag }}${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
+          gh release create ${{ steps.bump-release.outputs.new_tag }} -t "${{ steps.bump-release.outputs.new_tag }}${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
 
     - name: Create release [manual]
       shell: bash
@@ -125,7 +126,7 @@ runs:
           else
             draft=""
           fi
-          gh release create ${{ inputs.tag_name }} -t "${{ steps.create-release.outputs.new_tag }}${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
+          gh release create ${{ inputs.tag_name }} -t "${{ steps.bump-release.outputs.new_tag }}${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
           
 branding:
     icon: 'check-circle'
