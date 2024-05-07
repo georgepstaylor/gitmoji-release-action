@@ -10,8 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
+      repository-projects: read
     steps:
       - name: Create release
-        uses: georgepstaylor/gitmoji-release-action@main
+        uses: georgepstaylor/gitmoji-release-action@v0.0.4
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
