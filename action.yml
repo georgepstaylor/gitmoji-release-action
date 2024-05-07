@@ -59,6 +59,7 @@ runs:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: | 
           current_tag=$(echo "${{ steps.get-release.outputs.tag }}" | cut -d 'v' -f2)
+          echo $current_tag
           if [[ ${{ inputs.release_type }} == "patch" ]]; then
             new_tag=$(echo $current_tag | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
           elif [[ ${{ inputs.release_type }} == "minor" ]]; then
@@ -66,11 +67,13 @@ runs:
           elif [[ ${{ inputs.release_type }} == "major" ]]; then
             new_tag=$(echo $current_tag | awk -F. '{$1 = $1 + 1; $(NF-1) = 0; $NF = 0;} 1' | sed 's/ /./g')
           fi
+          echo $new_tag
           if [[ ${{ inputs.use_v }} == "true" ]]; then
             echo "new_tag=v${new_tag}" >> $GITHUB_OUTPUT
           else
             echo "new_tag=${new_tag}" >> $GITHUB_OUTPUT
           fi
+          echo $new_tag
 
     - name: Create release [auto]
       shell: bash
