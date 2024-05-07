@@ -51,6 +51,8 @@ runs:
     - name: Bump release
       shell: bash
       if: ${{ inputs.auto_create_tag == 'true' }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: | 
           current_tag=echo "${{ steps.get-release.outputs.tag }}" | cut -d 'v' -f2
           if [[ ${{ inputs.release_type }} == "patch" ]]; then
@@ -69,6 +71,8 @@ runs:
     - name: Create release [auto]
       shell: bash
       if: ${{ inputs.auto_create_tag == 'true' }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: |
           # if latest input is true set the latest flag
           if [[ ${{ inputs.latest }} == "true" ]]; then
@@ -93,6 +97,8 @@ runs:
     - name: Create release [manual]
       shell: bash
       if: ${{ inputs.auto_create_tag != 'true' }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: |
           # if latest input is true set the latest flag
           if [[ ${{ inputs.latest }} == "true" ]]; then
@@ -113,6 +119,7 @@ runs:
             draft=""
           fi
           gh release create ${{ inputs.tag_name }} -t "${{ steps.create-release.outputs.new_tag }}${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
+          
 branding:
     icon: 'check-circle'
     color: 'green'
