@@ -58,7 +58,7 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: | 
-          current_tag=echo "${{ steps.get-release.outputs.tag }}" | cut -d 'v' -f2
+          current_tag=$(echo "${{ steps.get-release.outputs.tag }}" | cut -d 'v' -f2)
           if [[ ${{ inputs.release_type }} == "patch" ]]; then
             new_tag=$(echo $current_tag | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
           elif [[ ${{ inputs.release_type }} == "minor" ]]; then
