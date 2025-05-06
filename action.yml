@@ -3,39 +3,39 @@ name: gitmoji-release-action
 description: Creates a release with gitmoji labels
 
 inputs:
-    GITHUB_TOKEN:
-        description: 'GitHub token'
-        required: true
-    release_type:
-        description: 'Type of release'
-        required: true
-    tag_name:
-        description: 'Tag name'
-        required: false
-    auto_create_tag:
-        description: 'Auto create tag'
-        required: false
-        default: 'false'
-    title_suffix:
-        description: 'Title suffix'
-        required: false
-        default: 'Release'
-    use_v:
-        description: 'Use v prefix for tag name'
-        required: false
-        default: 'true'
-    draft:
-        description: 'Draft release'
-        required: false
-        default: 'false'
-    prerelease:
-        description: 'Pre-release'
-        required: false
-        default: 'false'
-    latest:
-        description: 'Make the release the latest'
-        required: false
-        default: 'true'
+  GITHUB_TOKEN:
+    description: "GitHub token"
+    required: true
+  release_type:
+    description: "Type of release"
+    required: true
+  tag_name:
+    description: "Tag name"
+    required: false
+  auto_create_tag:
+    description: "Auto create tag"
+    required: false
+    default: "false"
+  title_suffix:
+    description: "Title suffix"
+    required: false
+    default: "Release"
+  use_v:
+    description: "Use v prefix for tag name"
+    required: false
+    default: "true"
+  draft:
+    description: "Draft release"
+    required: false
+    default: "false"
+  prerelease:
+    description: "Pre-release"
+    required: false
+    default: "false"
+  latest:
+    description: "Make the release the latest"
+    required: false
+    default: "true"
 
 runs:
   using: "composite"
@@ -58,23 +58,35 @@ runs:
       if: ${{ inputs.auto_create_tag == 'true' }}
       env:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-      run: | 
-          current_tag=$(echo "${{ steps.get-release.outputs.tag }}" | cut -d 'v' -f2)
-          echo $current_tag
-          if [[ ${{ inputs.release_type }} == "patch" ]]; then
-            new_tag=$(echo $current_tag | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
-          elif [[ ${{ inputs.release_type }} == "minor" ]]; then
-            new_tag=$(echo $current_tag | awk -F. '{$(NF-1) = $(NF-1) + 1; $NF = 0;} 1' | sed 's/ /./g')
-          elif [[ ${{ inputs.release_type }} == "major" ]]; then
-            new_tag=$(echo $current_tag | awk -F. '{$1 = $1 + 1; $(NF-1) = 0; $NF = 0;} 1' | sed 's/ /./g')
-          fi
-          echo $new_tag
-          if [[ "${{ inputs.use_v }}" == "true" ]]; then
-            echo "final_tag=v${new_tag}" >> $GITHUB_OUTPUT
+      run: |
+        current_tag=$(echo "${{ steps.get-release.outputs.tag }}" | cut -d 'v' -f2)
+        echo $current_tag
+        if [[ ${{ inputs.release_type }} == "dev" ]]; then
+        if [[ $current_tag == *-dev* ]]; then
+          if [[ $current_tag =~ -dev([0-9]+)$ ]]; then
+            num=${BASH_REMATCH[1]}
+            new_num=$((num + 1))
+            new_tag=$(echo $current_tag | sed "s/-dev$num/-dev$new_num/")
           else
-            echo "final_tag=${new_tag}" >> $GITHUB_OUTPUT
+            new_tag="$current_tag-dev1"
           fi
-          echo $final_tag
+        else
+          new_tag="$current_tag-dev"
+        fi
+        elif [[ ${{ inputs.release_type }} == "patch" ]]; then
+          new_tag=$(echo $current_tag | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+        elif [[ ${{ inputs.release_type }} == "minor" ]]; then
+          new_tag=$(echo $current_tag | awk -F. '{$(NF-1) = $(NF-1) + 1; $NF = 0;} 1' | sed 's/ /./g')
+        elif [[ ${{ inputs.release_type }} == "major" ]]; then
+          new_tag=$(echo $current_tag | awk -F. '{$1 = $1 + 1; $(NF-1) = 0; $NF = 0;} 1' | sed 's/ /./g')
+        fi
+        echo $new_tag
+        if [[ "${{ inputs.use_v }}" == "true" ]]; then
+          echo "final_tag=v${new_tag}" >> $GITHUB_OUTPUT
+        else
+          echo "final_tag=${new_tag}" >> $GITHUB_OUTPUT
+        fi
+        echo $final_tag
 
     - name: Create release [auto]
       shell: bash
@@ -82,25 +94,25 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: |
-          # if latest input is true set the latest flag
-          if [[ ${{ inputs.latest }} == "true" ]]; then
-            latest="--latest"
-          else
-            latest=""
-          fi
-          # if prerelease input is true set the prerelease flag
-          if [[ ${{ inputs.prerelease }} == "true" ]]; then
-            prerelease="--prerelease"
-          else
-            prerelease=""
-          fi
-          # if draft input is true set the draft flag
-          if [[ ${{ inputs.draft }} == "true" ]]; then
-            draft="--draft"
-          else
-            draft=""
-          fi
-          gh release create ${{ steps.bump-release.outputs.final_tag }} -t "${{ steps.bump-release.outputs.final_tag }} ${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
+        # if latest input is true set the latest flag
+        if [[ ${{ inputs.latest }} == "true" ]]; then
+          latest="--latest"
+        else
+          latest=""
+        fi
+        # if prerelease input is true set the prerelease flag
+        if [[ ${{ inputs.prerelease }} == "true" ]]; then
+          prerelease="--prerelease"
+        else
+          prerelease=""
+        fi
+        # if draft input is true set the draft flag
+        if [[ ${{ inputs.draft }} == "true" ]]; then
+          draft="--draft"
+        else
+          draft=""
+        fi
+        gh release create ${{ steps.bump-release.outputs.final_tag }} -t "${{ steps.bump-release.outputs.final_tag }} ${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
 
     - name: Create release [manual]
       shell: bash
@@ -108,26 +120,26 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: |
-          # if latest input is true set the latest flag
-          if [[ ${{ inputs.latest }} == "true" ]]; then
-            latest="--latest"
-          else
-            latest=""
-          fi
-          # if prerelease input is true set the prerelease flag
-          if [[ ${{ inputs.prerelease }} == "true" ]]; then
-            prerelease="--prerelease"
-          else
-            prerelease=""
-          fi
-          # if draft input is true set the draft flag
-          if [[ ${{ inputs.draft }} == "true" ]]; then
-            draft="--draft"
-          else
-            draft=""
-          fi
-          gh release create ${{ inputs.tag_name }} -t "${{ inputs.tag_name }} ${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
-          
+        # if latest input is true set the latest flag
+        if [[ ${{ inputs.latest }} == "true" ]]; then
+          latest="--latest"
+        else
+          latest=""
+        fi
+        # if prerelease input is true set the prerelease flag
+        if [[ ${{ inputs.prerelease }} == "true" ]]; then
+          prerelease="--prerelease"
+        else
+          prerelease=""
+        fi
+        # if draft input is true set the draft flag
+        if [[ ${{ inputs.draft }} == "true" ]]; then
+          draft="--draft"
+        else
+          draft=""
+        fi
+        gh release create ${{ inputs.tag_name }} -t "${{ inputs.tag_name }} ${{ inputs.title_suffix }}" --generate-notes $draft $prerelease $latest
+
 branding:
-    icon: 'check-circle'
-    color: 'green'
+  icon: "check-circle"
+  color: "green"
